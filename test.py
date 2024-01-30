@@ -83,7 +83,6 @@ while True:
                     overall_id += 1
             page += 1
         else:
-            # Check if the response indicates that your IP is banned
             if "Access Denied" in session.text:
                 print("Your IP address is banned. Parsing stopped.")
                 break
