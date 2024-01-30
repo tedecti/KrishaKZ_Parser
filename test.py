@@ -83,8 +83,13 @@ while True:
                     overall_id += 1
             page += 1
         else:
-            print("Access to the site is restricted. Parsing stopped.")
-            break
+            # Check if the response indicates that your IP is banned
+            if "Access Denied" in session.text:
+                print("Your IP address is banned. Parsing stopped.")
+                break
+            else:
+                print(f"Access to the site is restricted. Parsing stopped. Status Code: {session.status_code}")
+                break
     except requests.exceptions.RequestException as e:
         print(f"Request error: {e}")
         break
