@@ -3,17 +3,14 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import json
-import time
-import codecs
-import pandas as pd
 
 page = 1
-base_url = "https://krisha.kz/prodazha/kvartiry/astana/?page={}"
+base_url = "https://krisha.kz/prodazha/kvartiry/?page={}"
 
 data_list = []
 overall_id = 1
 
-while page != 3:
+while True:
     try:
         session = requests.Session()
         retry = Retry(connect=3, backoff_factor=0.5)
@@ -42,7 +39,6 @@ while page != 3:
                     year_of_building_element = soup_item.find('div', {'data-name': 'house.year'})
                     floor_element = soup_item.find('div', {'data-name': 'flat.floor'})
                     square_element = soup_item.find('div', {'data-name': 'live.square'})
-                    renovation_element = soup_item.find('div', {'data-name': 'flat.renovation'})
 
                     if price_element:
                         price = price_element.get_text(strip=True).replace("\xa0", " ")
@@ -72,12 +68,6 @@ while page != 3:
                     else:
                         square = None
 
-                    if renovation_element:
-                        renovation = renovation_element.find('div', {
-                            'class': 'offer__advert-short-info'}).get_text(strip=True)
-                    else:
-                        renovation = None
-
                     data = {"id": overall_id,
                             "app_id": item_id,
                             "name": name,
@@ -86,30 +76,22 @@ while page != 3:
                             "city": city[0],
                             "year_of_building": year_of_building,
                             "floor": floor,
-                            "square": square[0],
-                            "renovation": renovation
+                            "square": square[0]
                             }
 
                     data_list.append(data)
                     overall_id += 1
-                    time.sleep(1)
             page += 1
         else:
-            print(session.status_code)
-            break
+            # Check if the response indicates that your IP is banned
+            if "Access Denied" in session.text:
+                print("Your IP address is banned. Parsing stopped.")
+                break
+            else:
+                print(f"Access to the site is restricted. Parsing stopped. Status Code: {session.status_code}")
+                break
     except requests.exceptions.RequestException as e:
         print(f"Request error: {e}")
         break
 with open('output.json', 'w', encoding='utf-8') as json_file:
     json.dump(data_list, json_file, ensure_ascii=False, indent=2)
-
-with open('output.json', 'r', encoding='utf-8') as json_file_read:
-    data = json.load(json_file_read)
-
-json_string = json.dumps(data, indent=2, ensure_ascii=False)
-
-with codecs.open("output.txt", "w", encoding="utf-8") as txt_file:
-    txt_file.write(json_string)
-
-df = pd.read_json('output.json')
-df.to_csv("output.csv", index=False)
