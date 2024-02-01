@@ -93,6 +93,7 @@ while page != 50:
                     data_list.append(data)
                     overall_id += 1
                     time.sleep(1)
+                    print(overall_id)
             page += 1
         else:
             print(session.status_code)
